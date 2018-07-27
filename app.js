@@ -1,6 +1,9 @@
 // storage controller
 
-const StorageCtrl = (function(){})();
+const StorageCtrl = (function(){
+
+
+})();
 
 // item controller
 const ItemCtrl = (function(){
@@ -13,9 +16,9 @@ const ItemCtrl = (function(){
   const data = {
     
     items : [
-      {id: 0, name: "Мясо", calories: 1000},
-      {id: 1, name: "Печенье", calories: 1300},
-      {id: 2, name: "Яица", calories: 700}
+      // {id: 0, name: "Мясо", calories: 1000},
+      // {id: 1, name: "Печенье", calories: 1300},
+      // {id: 2, name: "Яица", calories: 700}
     ],
     currentItem : null,
     totalCalories : 0
@@ -35,6 +38,8 @@ const ItemCtrl = (function(){
       const item = new Item(id, name, parseInt(calories));
 
       data.items.push(item);
+
+      return item;
     },
     getItems: function() {
       return data.items
@@ -77,6 +82,32 @@ const UICtrl = (function(){
     },
     getSelector: function() {
       return UISelector;
+    },
+    addListItem: function(item) {
+      // show list
+      document.querySelector(UISelector.itemList).style.display = 'block'; 
+      // create li element 
+      const li = document.createElement('li');
+      li.className = 'collection-item';
+      li.id = `item=${name.id}`;
+
+      li.innerHTML = `
+        <strong>${item.name}: </strong> <em>${item.calories} калорий</em>
+        <a href="#" class="secondary-content">
+          <i class="edit-item fa fa-pencil"></i>
+        </a>
+      `;
+
+      //insert item 
+      document.querySelector(UISelector.itemList).insertAdjacentElement('beforeend', li)
+
+    },
+    clearFields: function() {
+      document.querySelector(UISelector.name).value = '';
+      document.querySelector(UISelector.calories).value = '';
+    },
+    hideList: function() {
+      document.querySelector(UISelector.itemList).style.display = 'none';
     }
   }
 })();
@@ -86,28 +117,40 @@ const App = (function(ItemCtrl, UICtrl){
 
   const UIselector = UICtrl.getSelector();
   const loadEventListener = function() {
+
     document.querySelector(UIselector.form).addEventListener('submit', itemAddSubmit);
 
   }
+
 
   const itemAddSubmit = function(e) {
     e.preventDefault();
     const input = UICtrl.getItemInput();
 
-    if(input.name !== '' && input.calories !== '') {
-      const newItem = ItemCtrl.addItem(input.name, input.calories)
+   
+    if(input.name !== '' && input.calories !== '' && !isNaN(+(input.calories))) {
+      const newItem = ItemCtrl.addItem(input.name, input.calories);
+
+      UICtrl.addListItem(newItem);
+
+      // clear fields
+      UICtrl.clearFields()
     }
   
-    console.table(ItemCtrl.logData().items)
   }
 
   return {
     init: function() {
       const items = ItemCtrl.getItems();
-
-      UICtrl.populateItemList(items)
-
+      
       loadEventListener()
+
+      if(items.length === 0) {
+        UICtrl.hideList()
+      } else {
+        UICtrl.populateItemList(items)
+
+      }
     }
   }
 })(ItemCtrl, UICtrl);
