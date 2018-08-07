@@ -1,7 +1,59 @@
 // storage controller
-
 const StorageCtrl = (function(){
+  return {
+    setItemsStorage: function(item) {
+      let items;
+      // add item to localStorage
+      if(localStorage.getItem('items') === null) {
+        items = [];
+      } else {
+        items = JSON.parse(localStorage.getItem('items'))
+      }
 
+      items.push(item);
+
+      localStorage.setItem('items', JSON.stringify(items))
+    },
+    getItemsStorage: function() {
+      let items;
+      // get items from localStorage
+      if (localStorage.getItem('items') === null) {
+        items = [];
+
+      } else {
+        items = JSON.parse(localStorage.getItem('items'))
+      }
+
+      return items
+    }, 
+    updateItemsStorage: function(itemUpdate) {
+      let items = JSON.parse(localStorage.getItem("items"));
+      const ids = itemUpdate.id;
+      items.forEach((item, index) => {
+        if(item.id == ids) {
+          items.splice(index, 1, itemUpdate)
+        }
+      })
+
+      localStorage.setItem('items', JSON.stringify(items));
+    },
+    deleteItemsStorage: function(id) {
+      let items = JSON.parse(localStorage.getItem("items"));
+      id = parseInt(id);
+      let changeItems = items.filter(item => {
+        if (item.id != id) {
+          return item
+        }
+      });
+
+      localStorage.setItem("items", JSON.stringify(changeItems));
+
+    },
+    clearStorage() {
+      localStorage.clear()
+    }
+
+  }
 
 })();
 
@@ -15,11 +67,7 @@ const ItemCtrl = (function(){
 
   const data = {
     
-    items : [
-      // {id: 0, name: "Мясо", calories: 1000},
-      // {id: 1, name: "Печенье", calories: 1300},
-      // {id: 2, name: "Яица", calories: 700}
-    ],
+    items : StorageCtrl.getItemsStorage(), 
     currentItem : null,
     totalCalories : 0
   }
@@ -237,7 +285,7 @@ const UICtrl = (function(){
 })();
 
 //App controller
-const App = (function(ItemCtrl, UICtrl){
+const App = (function(ItemCtrl, UICtrl, StorageCtrl){
 
   const UIselector = UICtrl.getSelector();
   const loadEventListener = function() {
@@ -263,7 +311,8 @@ const App = (function(ItemCtrl, UICtrl){
     
     if(input.name !== '' && input.calories !== '' && !isNaN(+(input.calories))) {
       const newItem = ItemCtrl.addItem(input.name, input.calories);
-
+      
+      StorageCtrl.setItemsStorage(newItem);
       UICtrl.addListItem(newItem);
 
       // clear fields
@@ -301,8 +350,10 @@ const App = (function(ItemCtrl, UICtrl){
     const input = UICtrl.getItemInput();
 
     const updateItem = ItemCtrl.getUpdateItem(input.name, input.calories);
-    
-    UICtrl.updateItemList(...updateItem)
+    //update itemList
+    UICtrl.updateItemList(...updateItem);
+    // update localStorage items
+    StorageCtrl.updateItemsStorage(...updateItem);
 
     const totalCalories = ItemCtrl.getTotalCalories();
     // show total calories
@@ -333,6 +384,7 @@ const App = (function(ItemCtrl, UICtrl){
 
     UICtrl.deleteItemList(idCurrentItem);
 
+    StorageCtrl.deleteItemsStorage(idCurrentItem);
     // show total calories
     const totalCalories = ItemCtrl.getTotalCalories();
 
@@ -348,6 +400,8 @@ const App = (function(ItemCtrl, UICtrl){
     ItemCtrl.clearListItem();
 
     UICtrl.clearItems();
+
+    StorageCtrl.clearStorage();
 
     const totalCalories = ItemCtrl.getTotalCalories();
     // show total calories
@@ -380,8 +434,8 @@ const App = (function(ItemCtrl, UICtrl){
 
     }
   }
-})(ItemCtrl, UICtrl);
-// item controller 
+})(ItemCtrl, UICtrl, StorageCtrl);
+
 
 // init app
 App.init()
